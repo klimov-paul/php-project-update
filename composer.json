@@ -1,0 +1,39 @@
+{
+    "name": "klimov-paul/php-project-update",
+    "description": "Allows re-building materials from 3rd party libraries with patch",
+    "keywords": ["php", "project", "update", "deployment", "continuous", "integration", "VCS", "GIT", "Mercurial"],
+    "license": "BSD-3-Clause",
+    "support": {
+        "issues": "https://github.com/klimov-paul/php-project-update/issues",
+        "wiki": "https://github.com/klimov-paul/php-project-update/wiki",
+        "source": "https://github.com/klimov-paul/php-project-update"
+    },
+    "authors": [
+        {
+            "name": "Paul Klimov",
+            "email": "klimov.paul@gmail.com"
+        }
+    ],
+    "require": {
+        "symfony/console": "~4.3.3",
+        "symfony/lock": "~4.3.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "KlimovPaul\\PhpProjectUpdate\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "KlimovPaul\\PhpProjectUpdate\\Test\\": "tests"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
