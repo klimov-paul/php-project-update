@@ -2,7 +2,8 @@
 
 namespace KlimovPaul\PhpProjectUpdate\Vcs;
 
-use KlimovPaul\PhpProjectUpdate\Shell;
+use KlimovPaul\PhpProjectUpdate\Helpers\Shell;
+use KlimovPaul\PhpProjectUpdate\Log\LoggerAwareTrait;
 use RuntimeException;
 
 /**
@@ -15,6 +16,8 @@ use RuntimeException;
  */
 class Git implements VcsContract
 {
+    use LoggerAwareTrait;
+
     /**
      * @var string path to the 'git' bin command.
      * By default simple 'git' is used assuming it available as global shell command.
@@ -52,7 +55,7 @@ class Git implements VcsContract
     /**
      * {@inheritdoc}
      */
-    public function hasRemoteChanges($projectRoot, &$log = null): bool
+    public function hasRemoteChanges($projectRoot): bool
     {
         $placeholders = [
             '{binPath}' => $this->binPath,
@@ -62,10 +65,10 @@ class Git implements VcsContract
         ];
 
         $fetchResult = Shell::execute('(cd {projectRoot}; {binPath} fetch {remote})', $placeholders);
-        $log = $fetchResult->toString() . "\n";
+        $this->getLogger()->info($fetchResult->toString());
 
         $result = Shell::execute('(cd {projectRoot}; {binPath} diff --numstat HEAD {remote}/{branch})', $placeholders);
-        $log .= $result->toString();
+        $this->getLogger()->info($result->toString());
 
         return ($result->isOk() && !$result->isOutputEmpty());
     }
@@ -73,7 +76,7 @@ class Git implements VcsContract
     /**
      * {@inheritdoc}
      */
-    public function applyRemoteChanges($projectRoot, &$log = null): bool
+    public function applyRemoteChanges($projectRoot): bool
     {
         $result = Shell::execute('(cd {projectRoot}; {binPath} merge {remote}/{branch})', [
             '{binPath}' => $this->binPath,
@@ -81,7 +84,7 @@ class Git implements VcsContract
             '{remote}' => $this->remoteName,
             '{branch}' => $this->getCurrentBranch($projectRoot),
         ]);
-        $log = $result->toString();
+        $this->getLogger()->info($result->toString());
 
         return $result->isOk();
     }

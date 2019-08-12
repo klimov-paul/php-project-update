@@ -1,6 +1,6 @@
 <?php
 
-namespace KlimovPaul\PhpProjectUpdate;
+namespace KlimovPaul\PhpProjectUpdate\Helpers;
 
 /**
  * ShellResult represents shell command execution result.

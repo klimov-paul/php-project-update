@@ -1,6 +1,6 @@
 <?php
 
-namespace KlimovPaul\PhpProjectUpdate;
+namespace KlimovPaul\PhpProjectUpdate\Helpers;
 
 /**
  * Shell is a helper for shell command execution.

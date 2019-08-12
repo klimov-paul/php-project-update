@@ -1,6 +1,6 @@
 <?php
 
-namespace KlimovPaul\PhpProjectUpdate;
+namespace KlimovPaul\PhpProjectUpdate\Helpers;
 
 use InvalidArgumentException;
 use ReflectionClass;

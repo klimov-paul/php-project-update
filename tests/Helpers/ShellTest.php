@@ -1,8 +1,9 @@
 <?php
 
-namespace KlimovPaul\PhpProjectUpdate\Test;
+namespace KlimovPaul\PhpProjectUpdate\Test\Helpers;
 
-use KlimovPaul\PhpProjectUpdate\Shell;
+use KlimovPaul\PhpProjectUpdate\Helpers\Shell;
+use KlimovPaul\PhpProjectUpdate\Test\TestCase;
 
 class ShellTest extends TestCase
 {

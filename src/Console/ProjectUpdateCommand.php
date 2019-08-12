@@ -2,6 +2,7 @@
 
 namespace KlimovPaul\PhpProjectUpdate\Console;
 
+use KlimovPaul\PhpProjectUpdate\ProjectFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,12 +18,20 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ProjectUpdateCommand extends Command
 {
     /**
+     * @var array application config.
+     */
+    protected $config = [];
+
+    /**
      * Constructor.
      *
+     * @param array $config application config.
      * @return void
      */
-    public function __construct()
+    public function __construct(array $config)
     {
+        $this->config = $config;
+
         parent::__construct('project-update');
 
         $this->setDescription('Updates specified project');
@@ -45,7 +54,12 @@ class ProjectUpdateCommand extends Command
     {
         $projectName = $input->getArgument('project-name');
 
+        $factory = new ProjectFactory($this->config);
+        $project = $factory->create($projectName);
+
         $output->writeln('Updating project "' . $projectName . '"...');
+
+        $project->update();
 
         return 0;
     }

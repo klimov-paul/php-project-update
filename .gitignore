@@ -29,3 +29,6 @@ phpunit.phar
 /phpunit.xml
 # phpunit cache
 .phpunit.result.cache
+
+# local files
+config/local.php

@@ -1,8 +1,9 @@
 <?php
 
-namespace KlimovPaul\PhpProjectUpdate\Test;
+namespace KlimovPaul\PhpProjectUpdate\Test\Helpers;
 
-use KlimovPaul\PhpProjectUpdate\ShellResult;
+use KlimovPaul\PhpProjectUpdate\Helpers\ShellResult;
+use KlimovPaul\PhpProjectUpdate\Test\TestCase;
 
 class ShellResultTest extends TestCase
 {

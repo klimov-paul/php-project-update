@@ -2,7 +2,8 @@
 
 namespace KlimovPaul\PhpProjectUpdate\Vcs;
 
-use KlimovPaul\PhpProjectUpdate\Shell;
+use KlimovPaul\PhpProjectUpdate\Log\LoggerAwareTrait;
+use KlimovPaul\PhpProjectUpdate\Helpers\Shell;
 
 /**
  * Mercurial represents Mercurial (Hg) version control system.
@@ -14,6 +15,8 @@ use KlimovPaul\PhpProjectUpdate\Shell;
  */
 class Mercurial implements VcsContract
 {
+    use LoggerAwareTrait;
+
     /**
      * @var string path to the 'hg' bin command.
      * By default simple 'hg' is used assuming it available as global shell command.
@@ -40,14 +43,14 @@ class Mercurial implements VcsContract
     /**
      * {@inheritdoc}
      */
-    public function hasRemoteChanges($projectRoot, &$log = null): bool
+    public function hasRemoteChanges($projectRoot): bool
     {
         $result = Shell::execute("(cd {projectRoot}; {binPath} incoming -b {branch} --newest-first --limit 1)", [
             '{binPath}' => $this->binPath,
             '{projectRoot}' => $projectRoot,
             '{branch}' => $this->getCurrentBranch($projectRoot),
         ]);
-        $log = $result->toString();
+        $this->getLogger()->info($result->toString());
 
         return $result->isOk();
     }
@@ -55,14 +58,14 @@ class Mercurial implements VcsContract
     /**
      * {@inheritdoc}
      */
-    public function applyRemoteChanges($projectRoot, &$log = null): bool
+    public function applyRemoteChanges($projectRoot): bool
     {
         $result = Shell::execute('(cd {projectRoot}; {binPath} pull -b {branch} -u)', [
             '{binPath}' => $this->binPath,
             '{projectRoot}' => $projectRoot,
             '{branch}' => $this->getCurrentBranch($projectRoot),
         ]);
-        $log = $result->toString();
+        $this->getLogger()->info($result->toString());
 
         return $result->isOk();
     }

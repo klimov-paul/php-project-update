@@ -3,6 +3,8 @@
 namespace KlimovPaul\PhpProjectUpdate;
 
 use InvalidArgumentException;
+use KlimovPaul\PhpProjectUpdate\Helpers\Factory;
+use KlimovPaul\PhpProjectUpdate\Helpers\Shell;
 use KlimovPaul\PhpProjectUpdate\Log\LoggerAwareTrait;
 use KlimovPaul\PhpProjectUpdate\Vcs\Git;
 use KlimovPaul\PhpProjectUpdate\Vcs\Mercurial;
@@ -11,12 +13,12 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
 /**
- * ProjectUpdater
+ * Project represents particular project, which should be updated.
  *
  * @author Paul Klimov <klimov.paul@gmail.com>
  * @since 1.0
  */
-class ProjectUpdater implements LoggerAwareInterface
+class Project implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
@@ -24,7 +26,7 @@ class ProjectUpdater implements LoggerAwareInterface
      * @var string path to project root directory, which means VCS root directory.
      * For example: '/var/www/myproject'
      */
-    public $projectRootPath;
+    public $rootPath;
     /**
      * @var array project web path stubs configuration.
      * Each path configuration should have following keys:
@@ -74,7 +76,7 @@ class ProjectUpdater implements LoggerAwareInterface
     ];
     /**
      * @var array list of possible version control systems (VCS) in format: `vcsFolderName => classConfig`.
-     * VCS will be detected automatically based on which folder is available inside {@see projectRootPath}
+     * VCS will be detected automatically based on which folder is available inside {@see rootPath}
      */
     public $versionControlSystems = [
         '.git' => [
@@ -85,13 +87,30 @@ class ProjectUpdater implements LoggerAwareInterface
         ],
     ];
 
-    public function handle()
+    /**
+     * Updates this project sources.
+     */
+    public function update()
     {
         $this->validateWebPaths();
 
-        $versionControlSystem = $this->detectVersionControlSystem($this->projectRootPath);
+        $versionControlSystem = $this->detectVersionControlSystem($this->rootPath);
 
-        $changesDetected = $versionControlSystem->hasRemoteChanges($this->projectRootPath, $log);
+        $changesDetected = $versionControlSystem->hasRemoteChanges($this->rootPath);
+
+        if ($changesDetected) {
+            $this->linkWebStubs();
+
+            $versionControlSystem->applyRemoteChanges($this->rootPath);
+
+            $this->executeCommands($this->commands);
+
+            $this->linkWebPaths();
+
+            $this->getLogger()->info('Project has been updated successfully.');
+        } else {
+            $this->getLogger()->info('No changes detected. Project is already up-to-date.');
+        }
     }
 
     /**
@@ -105,7 +124,11 @@ class ProjectUpdater implements LoggerAwareInterface
     {
         foreach ($this->versionControlSystems as $folderName => $config) {
             if (file_exists($path . DIRECTORY_SEPARATOR . $folderName)) {
-                return Factory::make($config);
+                /* @var $vcs \KlimovPaul\PhpProjectUpdate\Vcs\VcsContract */
+                $vcs = Factory::make($config);
+                $vcs->setLogger($this->getLogger());
+
+                return $vcs;
             }
         }
 
@@ -163,5 +186,50 @@ class ProjectUpdater implements LoggerAwareInterface
             }
             symlink($webPath['path'], $webPath['link']);
         }
+    }
+
+    /**
+     * Executes list of given commands.
+     * @param array $commands commands to be executed.
+     * @throws InvalidArgumentException on invalid commands specification.
+     */
+    protected function executeCommands(array $commands)
+    {
+        foreach ($commands as $command) {
+            if (is_string($command)) {
+                $this->execShellCommand($command);
+            } elseif (is_callable($command)) {
+                $this->getLogger()->info(call_user_func($command));
+            } else {
+                throw new InvalidArgumentException('Command should be a string or a valid PHP callback');
+            }
+        }
+    }
+
+    /**
+     * Executes shell command.
+     *
+     * @param string $command command text.
+     * @return string command output.
+     * @param array $placeholders placeholders to be replaced using `escapeshellarg()` in format: `placeholder => value`.
+     * @throws \RuntimeException on failure.
+     */
+    protected function execShellCommand($command, array $placeholders = [])
+    {
+        $result = Shell::execute($command, $placeholders);
+        $this->getLogger()->info($result->toString());
+
+        $output = $result->getOutput();
+        if (!$result->isOk()) {
+            throw new RuntimeException("Execution of '{$result->command}' failed: exit code = '{$result->exitCode}': \nOutput: \n{$output}");
+        }
+
+        foreach ($this->shellResponseErrorKeywords as $errorKeyword) {
+            if (stripos($output, $errorKeyword) !== false) {
+                throw new RuntimeException("Execution of '{$result->command}' failed! \nOutput: \n{$output}");
+            }
+        }
+
+        return $output;
     }
 }
